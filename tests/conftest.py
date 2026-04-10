@@ -7,6 +7,8 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 import server
 
 
+# Données de test pour les clubs : 3 clubs avec des soldes de points différents
+# Simply Lift (13 pts) et She Lifts (12 pts) ont assez de points, Iron Temple (4 pts) non
 @pytest.fixture
 def clubs_data():
     return [
@@ -16,6 +18,10 @@ def clubs_data():
     ]
 
 
+# Données de test pour les compétitions :
+# - Spring Festival : compétition future avec beaucoup de places (25)
+# - Fall Classic : compétition future avec peu de places (13)
+# - Past Competition : compétition passée, ne doit pas être réservable
 @pytest.fixture
 def competitions_data():
     return [
@@ -25,6 +31,8 @@ def competitions_data():
     ]
 
 
+# Client Flask de test : écrit les données dans un dossier temporaire,
+# recharge le module server pour repartir d'un état propre à chaque test
 @pytest.fixture
 def client(clubs_data, competitions_data, tmp_path):
     (tmp_path / "clubs.json").write_text(json.dumps({"clubs": clubs_data}))
