@@ -9,7 +9,7 @@ def test_purchase_deducts_points(client):
             'competition': 'Spring Festival',
             'places': '3'
         })
-    club = next(c for c in server.clubs if c['name'] == 'Simply Lift')
+    club = [c for c in server.clubs if c['name'] == 'Simply Lift'][0]
     assert int(club['points']) == 10
 
 
@@ -20,7 +20,7 @@ def test_purchase_deducts_places(client):
             'competition': 'Spring Festival',
             'places': '3'
         })
-    comp = next(c for c in server.competitions if c['name'] == 'Spring Festival')
+    comp = [c for c in server.competitions if c['name'] == 'Spring Festival'][0]
     assert int(comp['numberOfPlaces']) == 22
 
 
@@ -29,7 +29,7 @@ def test_points_not_deducted_on_failed_booking(client):
         client.post('/purchasePlaces', data={
             'club': 'Iron Temple',
             'competition': 'Spring Festival',
-            'places': '5'  # Iron Temple a seulement 4 points
+            'places': '5'
         })
-    club = next(c for c in server.clubs if c['name'] == 'Iron Temple')
-    assert int(club['points']) == 4  # inchange
+    club = [c for c in server.clubs if c['name'] == 'Iron Temple'][0]
+    assert int(club['points']) == 4
