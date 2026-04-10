@@ -5,14 +5,16 @@ import server
 # Vérifie que les points du club sont bien déduits après une réservation réussie
 # Simply Lift part de 13 points, réserve 3 places → doit avoir 10 points
 def test_purchase_deducts_points(client):
+    # patch() remplace saveClubs et saveCompetitions par des faux pour ne pas écrire sur le disque
     with patch('server.saveClubs'), patch('server.saveCompetitions'):
         client.post('/purchasePlaces', data={
             'club': 'Simply Lift',
             'competition': 'Spring Festival',
             'places': '3'
         })
+    # On lit directement la variable globale de server.py pour vérifier la déduction en mémoire
     club = [c for c in server.clubs if c['name'] == 'Simply Lift'][0]
-    assert int(club['points']) == 10
+    assert int(club['points']) == 10  # 13 - 3 = 10
 
 
 # Vérifie que les places de la compétition sont bien déduites après une réservation réussie
@@ -24,8 +26,9 @@ def test_purchase_deducts_places(client):
             'competition': 'Spring Festival',
             'places': '3'
         })
+    # On lit directement la variable globale de server.py pour vérifier la déduction en mémoire
     comp = [c for c in server.competitions if c['name'] == 'Spring Festival'][0]
-    assert int(comp['numberOfPlaces']) == 22
+    assert int(comp['numberOfPlaces']) == 22  # 25 - 3 = 22
 
 
 # Vérifie que les points ne sont PAS déduits si la réservation échoue
@@ -38,4 +41,4 @@ def test_points_not_deducted_on_failed_booking(client):
             'places': '5'
         })
     club = [c for c in server.clubs if c['name'] == 'Iron Temple'][0]
-    assert int(club['points']) == 4
+    assert int(club['points']) == 4  # Le solde ne doit pas avoir changé

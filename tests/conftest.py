@@ -3,6 +3,7 @@ import json
 import os
 import sys
 
+# Ajoute le dossier racine du projet au path Python pour pouvoir importer server.py
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 import server
 
@@ -35,13 +36,17 @@ def competitions_data():
 # recharge le module server pour repartir d'un état propre à chaque test
 @pytest.fixture
 def client(clubs_data, competitions_data, tmp_path):
+    # Écrit les fichiers JSON dans un dossier temporaire isolé pour ce test
     (tmp_path / "clubs.json").write_text(json.dumps({"clubs": clubs_data}))
     (tmp_path / "competitions.json").write_text(json.dumps({"competitions": competitions_data}))
+
+    # Se place dans le dossier temporaire pour que server.py lise les bons fichiers
     os.chdir(tmp_path)
 
+    # Recharge server.py pour réinitialiser les variables globales clubs et competitions
     import importlib
     importlib.reload(server)
 
-    server.app.config["TESTING"] = True
+    server.app.config["TESTING"] = True  # Active le mode test de Flask (pas de vraies erreurs HTTP)
     with server.app.test_client() as c:
-        yield c
+        yield c  # Fournit le client au test, puis ferme proprement après
