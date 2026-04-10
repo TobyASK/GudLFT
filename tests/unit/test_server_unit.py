@@ -46,12 +46,17 @@ def test_unknown_email_returns_empty(clubs_data):
     assert len(found) == 0
 
 
-def test_12_places_allowed():
-    assert 12 <= 12
+def test_12_places_allowed(competitions_data):
+    comp = [c for c in competitions_data if c['name'] == 'Spring Festival'][0]
+    places_required = 12
+    assert places_required <= 12
+    assert places_required <= int(comp['numberOfPlaces'])
 
 
-def test_13_places_rejected():
-    assert 13 > 12
+def test_13_places_rejected(competitions_data):
+    comp = [c for c in competitions_data if c['name'] == 'Spring Festival'][0]
+    places_required = 13
+    assert places_required > 12
 
 
 def test_cannot_book_more_than_available(competitions_data):
