@@ -61,4 +61,5 @@ def test_13_places_rejected(competitions_data):
 
 def test_cannot_book_more_than_available(competitions_data):
     comp = [c for c in competitions_data if c['name'] == 'Fall Classic'][0]
-    assert 20 > int(comp['numberOfPlaces'])
+    places_required = 20
+    assert places_required > int(comp['numberOfPlaces'])
