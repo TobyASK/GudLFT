@@ -1,0 +1,38 @@
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau des points | GUDLFT</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 40px auto; padding: 0 20px; }
+        h1 { color: #333; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #f4f4f4; font-weight: bold; }
+        tr:hover { background-color: #f9f9f9; }
+        a { color: #0066cc; }
+    </style>
+</head>
+<body>
+    <h1>Tableau des points des clubs</h1>
+    <p>Consulter les points disponibles pour chaque club.</p>
+    <table>
+        <thead>
+            <tr>
+                <th>Club</th>
+                <th>Points disponibles</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for club in clubs %}
+            <tr>
+                <td>{{ club['name'] }}</td>
+                <td>{{ club['points'] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <br>
+    <a href="{{ url_for('index') }}">Retour a l'accueil</a>
+</body>
+</html>
