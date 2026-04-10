@@ -14,6 +14,16 @@ def loadCompetitions():
          return listOfCompetitions
 
 
+def saveClubs():
+    with open('clubs.json', 'w') as c:
+        json.dump({'clubs': clubs}, c, indent=2)
+
+
+def saveCompetitions():
+    with open('competitions.json', 'w') as comps:
+        json.dump({'competitions': competitions}, comps, indent=2)
+
+
 app = Flask(__name__)
 app.secret_key = 'something_special'
 
@@ -47,6 +57,11 @@ def purchasePlaces():
     club = [c for c in clubs if c['name'] == request.form['club']][0]
     placesRequired = int(request.form['places'])
     competition['numberOfPlaces'] = int(competition['numberOfPlaces'])-placesRequired
+    # BUG FIX #6 : deduire les points ET les places
+    clubPoints = int(club['points'])
+    club['points'] = clubPoints - placesRequired
+    saveClubs()
+    saveCompetitions()
     flash('Great-booking complete!')
     return render_template('welcome.html', club=club, competitions=competitions)
 
