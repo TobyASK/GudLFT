@@ -29,7 +29,7 @@ Les tests étaient déjà écrits et échouaient — l'objectif était de corrig
 | 4 | Limite 12 places | On pouvait en réserver 50 | Vérification `placesRequired > 12` |
 | 5 | Compétition passée | On pouvait réserver en 2020 | Vérification de la date avec `datetime.now()` |
 | 6 | Points non déduits | Le solde ne bougeait pas | Ajout de `saveClubs()` / `saveCompetitions()` |
-| 282 | Surréservation | On pouvait vider une compétition | Vérification `placesRequired >= availablePlaces - 1` |
+| 282 | Surréservation | On pouvait vider une compétition | Vérification `placesRequired > availablePlaces` |
 
 ---
 

@@ -55,8 +55,8 @@ def test_points_board_shows_clubs(client):
 # Vérifie qu'une réservation valide retourne 200
 # Simply Lift (13 pts) réserve 3 places pour Spring Festival (25 places)
 def test_purchase_valid(client):
-    # patch() remplace saveClubs et saveCompetitions par des faux pour ne pas écrire sur le disque
-    with patch('server.saveClubs'), patch('server.saveCompetitions'):
+    # patch() remplace save_clubs et save_competitions par des faux pour ne pas écrire sur le disque
+    with patch('server.save_clubs'), patch('server.save_competitions'):
         response = client.post('/purchasePlaces', data={
             'club': 'Simply Lift',
             'competition': 'Spring Festival',
@@ -67,7 +67,7 @@ def test_purchase_valid(client):
 
 # Vérifie qu'on ne peut pas réserver plus de 12 places (limite par compétition)
 def test_purchase_too_many_places(client):
-    with patch('server.saveClubs'), patch('server.saveCompetitions'):
+    with patch('server.save_clubs'), patch('server.save_competitions'):
         response = client.post('/purchasePlaces', data={
             'club': 'Simply Lift',
             'competition': 'Spring Festival',
@@ -79,7 +79,7 @@ def test_purchase_too_many_places(client):
 # Vérifie qu'on ne peut pas réserver si le club n'a pas assez de points
 # Iron Temple (4 pts) tente de réserver 5 places → refus
 def test_purchase_not_enough_points(client):
-    with patch('server.saveClubs'), patch('server.saveCompetitions'):
+    with patch('server.save_clubs'), patch('server.save_competitions'):
         response = client.post('/purchasePlaces', data={
             'club': 'Iron Temple',   # 4 points disponibles
             'competition': 'Spring Festival',
@@ -89,12 +89,12 @@ def test_purchase_not_enough_points(client):
 
 
 # Vérifie qu'on ne peut pas réserver plus de places qu'il n'en reste disponibles
-# Fall Classic a 13 places, Simply Lift tente d'en réserver 12 → refus (trop proche du max)
+# Fall Classic a 13 places, Simply Lift tente d'en réserver 14 → refus
 def test_purchase_more_than_available(client):
-    with patch('server.saveClubs'), patch('server.saveCompetitions'):
+    with patch('server.save_clubs'), patch('server.save_competitions'):
         response = client.post('/purchasePlaces', data={
             'club': 'Simply Lift',
             'competition': 'Fall Classic',  # 13 places disponibles
-            'places': '12'                  # 12 >= 13 - 1 → refus
+            'places': '14'                  # 14 > 13 → surréservation
         })
     assert response.status_code == 400

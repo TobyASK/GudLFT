@@ -1,115 +1,126 @@
 import json
 from datetime import datetime
-from flask import Flask,render_template,request,redirect,flash,url_for
+from flask import Flask, render_template, request, redirect, flash, url_for
 
 
-# Charge la liste des clubs depuis le fichier JSON
-def loadClubs():
-    with open('clubs.json') as c:
-         listOfClubs = json.load(c)['clubs']
-         return listOfClubs
+def load_clubs():
+    # Charge la liste des clubs depuis le fichier JSON
+    with open('clubs.json') as clubs_file:
+        clubs = json.load(clubs_file)['clubs']
+        return clubs
 
 
-# Charge la liste des compétitions depuis le fichier JSON
-def loadCompetitions():
-    with open('competitions.json') as comps:
-         listOfCompetitions = json.load(comps)['competitions']
-         return listOfCompetitions
+def load_competitions():
+    # Charge la liste des compétitions depuis le fichier JSON
+    with open('competitions.json') as competitions_file:
+        competitions = json.load(competitions_file)['competitions']
+        return competitions
 
 
-# Sauvegarde l'état actuel des clubs dans le fichier JSON
-def saveClubs():
-    with open('clubs.json', 'w') as c:
-        json.dump({'clubs': clubs}, c)
+def save_clubs():
+    # Sauvegarde l'état actuel des clubs dans le fichier JSON
+    with open('clubs.json', 'w') as clubs_file:
+        json.dump({'clubs': clubs}, clubs_file)
 
 
-# Sauvegarde l'état actuel des compétitions dans le fichier JSON
-def saveCompetitions():
-    with open('competitions.json', 'w') as comps:
-        json.dump({'competitions': competitions}, comps)
+def save_competitions():
+    # Sauvegarde l'état actuel des compétitions dans le fichier JSON
+    with open('competitions.json', 'w') as competitions_file:
+        json.dump({'competitions': competitions}, competitions_file)
 
 
 app = Flask(__name__)
 app.secret_key = 'something_special'
 
 # Chargement des données au démarrage de l'application
-competitions = loadCompetitions()
-clubs = loadClubs()
+competitions = load_competitions()
+clubs = load_clubs()
 
-# Page d'accueil — formulaire de connexion
+
+def find_club_by_email(clubs_list, email):
+    # Retourne le club correspondant à l'email, ou None si inconnu
+    matches = [c for c in clubs_list if c['email'] == email]
+    return matches[0] if matches else None
+
+
+def is_future_competition(competition):
+    # Retourne True si la compétition n'est pas encore passée
+    competition_date = datetime.strptime(competition['date'], '%Y-%m-%d %H:%M:%S')
+    return competition_date > datetime.now()
+
+
+def get_booking_error(places_requested, club_points, available_places):
+    # Vérifie les règles métier d'une réservation — retourne un message d'erreur ou None si valide
+    if places_requested > 12:
+        return 'Cannot book more than 12 places'
+    if places_requested > available_places:
+        return 'Not enough places available'
+    if places_requested > club_points:
+        return 'Not enough points'
+    return None
+
+
 @app.route('/')
 def index():
+    # Page d'accueil — formulaire de connexion
     return render_template('index.html')
 
 
-# Connexion par email — affiche le tableau de bord si l'email est reconnu
-@app.route('/showSummary',methods=['POST'])
-def showSummary():
-    found = [club for club in clubs if club['email'] == request.form['email']]
-    if not found:
+@app.route('/showSummary', methods=['POST'])
+def show_summary():
+    # Connexion par email — affiche le tableau de bord si l'email est reconnu
+    club = find_club_by_email(clubs, request.form['email'])
+    if not club:
         flash('Email not found')
         return render_template('index.html'), 404
-    club = found[0]
-    return render_template('welcome.html',club=club,competitions=competitions)
+    return render_template('welcome.html', club=club, competitions=competitions)
 
 
-# Page de réservation — vérifie que la compétition n'est pas passée avant d'afficher le formulaire
-@app.route('/book/<competition>/<club>')
-def book(competition,club):
-    foundClub = [c for c in clubs if c['name'] == club][0]
-    foundCompetition = [c for c in competitions if c['name'] == competition][0]
-    if foundClub and foundCompetition:
-        competitionDate = datetime.strptime(foundCompetition['date'], '%Y-%m-%d %H:%M:%S')
-        # Interdit la réservation sur une compétition dont la date est dépassée
-        if competitionDate < datetime.now():
+@app.route('/book/<competition_name>/<club_name>')
+def book(competition_name, club_name):
+    # Page de réservation — vérifie que la compétition n'est pas passée avant d'afficher le formulaire
+    club = [c for c in clubs if c['name'] == club_name][0]
+    competition = [c for c in competitions if c['name'] == competition_name][0]
+    if club and competition:
+        if not is_future_competition(competition):
             flash('Cannot book a past competition')
-            return render_template('welcome.html', club=foundClub, competitions=competitions), 400
-        return render_template('booking.html',club=foundClub,competition=foundCompetition)
+            return render_template('welcome.html', club=club, competitions=competitions), 400
+        return render_template('booking.html', club=club, competition=competition)
     else:
         flash("Something went wrong-please try again")
-        return render_template('welcome.html', club=club, competitions=competitions)
+        return render_template('welcome.html', club=club_name, competitions=competitions)
 
 
-# Traitement de la réservation — applique toutes les règles métier avant de valider
-@app.route('/purchasePlaces',methods=['POST'])
-def purchasePlaces():
+@app.route('/purchasePlaces', methods=['POST'])
+def purchase_places():
+    # Traitement de la réservation — applique toutes les règles métier avant de valider
     competition = [c for c in competitions if c['name'] == request.form['competition']][0]
     club = [c for c in clubs if c['name'] == request.form['club']][0]
-    placesRequired = int(request.form['places'])
-    clubPoints = int(club['points'])
-    availablePlaces = int(competition['numberOfPlaces'])
+    places_requested = int(request.form['places'])
+    club_points = int(club['points'])
+    available_places = int(competition['numberOfPlaces'])
 
-    # Règle 1 : un club ne peut pas réserver plus de 12 places par compétition
-    if placesRequired > 12:
-        flash('Cannot book more than 12 places')
-        return render_template('welcome.html', club=club, competitions=competitions), 400
-
-    # Règle 2 : on ne peut pas réserver plus de places qu'il n'en reste disponibles
-    if placesRequired >= availablePlaces - 1:
-        flash('Not enough places available')
-        return render_template('welcome.html', club=club, competitions=competitions), 400
-
-    # Règle 3 : le club doit avoir suffisamment de points (1 point = 1 place)
-    if placesRequired > clubPoints:
-        flash('Not enough points')
+    error = get_booking_error(places_requested, club_points, available_places)
+    if error:
+        flash(error)
         return render_template('welcome.html', club=club, competitions=competitions), 400
 
     # Déduction des places et des points après réservation validée
-    competition['numberOfPlaces'] = int(competition['numberOfPlaces'])-placesRequired
-    club['points'] = int(club['points'])-placesRequired
-    saveClubs()
-    saveCompetitions()
+    competition['numberOfPlaces'] = int(competition['numberOfPlaces']) - places_requested
+    club['points'] = int(club['points']) - places_requested
+    save_clubs()
+    save_competitions()
     flash('Great-booking complete!')
     return render_template('welcome.html', club=club, competitions=competitions)
 
 
-# Tableau public des points — accessible sans connexion
 @app.route('/pointsBoard')
-def pointsBoard():
+def points_board():
+    # Tableau public des points — accessible sans connexion
     return render_template('points_board.html', clubs=clubs)
 
 
-# Déconnexion — redirige vers la page d'accueil
 @app.route('/logout')
 def logout():
+    # Déconnexion — redirige vers la page d'accueil
     return redirect(url_for('index'))

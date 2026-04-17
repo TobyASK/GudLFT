@@ -2,10 +2,10 @@ import pytest
 import json
 import os
 import sys
+import server
 
 # Ajoute le dossier racine du projet au path Python pour pouvoir importer server.py
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
-import server
 
 
 # Données de test pour les clubs : 3 clubs avec des soldes de points différents
