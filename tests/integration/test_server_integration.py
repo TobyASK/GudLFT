@@ -2,10 +2,10 @@ from unittest.mock import patch
 import server
 
 
-# Cas d'usage complet : un club se connecte, réserve des places, et son solde est mis à jour
-# Simply Lift (13 pts) se connecte, réserve 3 places pour Spring Festival
-# → la page de confirmation s'affiche ET les points sont bien déduits en mémoire
 def test_full_booking_workflow(client):
+    # Cas d'usage complet : un club se connecte, réserve des places, et son solde est mis à jour.
+    # Simply Lift (13 pts) se connecte, réserve 3 places pour Spring Festival.
+    # La page de confirmation s'affiche et les points sont bien déduits en mémoire.
     # Étape 1 : connexion par email
     login_response = client.post('/showSummary', data={'email': 'john@simplylift.co'})
     assert login_response.status_code == 200

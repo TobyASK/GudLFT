@@ -1,60 +1,60 @@
 from unittest.mock import patch
 
 
-# Vérifie que la page d'accueil est accessible
 def test_index(client):
+    # Vérifie que la page d'accueil est accessible
     response = client.get('/')
     assert response.status_code == 200
 
 
-# Vérifie qu'un email valide affiche bien le tableau de bord avec l'email du club
 def test_login_valid_email(client):
+    # Vérifie qu'un email valide affiche bien le tableau de bord avec l'email du club
     response = client.post('/showSummary', data={'email': 'john@simplylift.co'})
     assert response.status_code == 200
     assert b'john@simplylift.co' in response.data  # b'' = bytes, le contenu HTML est en bytes
 
 
-# Vérifie qu'un email inconnu retourne une erreur 404
 def test_login_unknown_email(client):
+    # Vérifie qu'un email inconnu retourne une erreur 404
     response = client.post('/showSummary', data={'email': 'unknown@test.com'})
     assert response.status_code == 404
 
 
-# Vérifie que la page de réservation s'affiche correctement pour une compétition future
 def test_book_page(client):
+    # Vérifie que la page de réservation s'affiche correctement pour une compétition future
     response = client.get('/book/Spring Festival/Simply Lift')
     assert response.status_code == 200
     assert b'Spring Festival' in response.data  # Le nom de la compétition doit apparaître dans la page
 
 
-# Vérifie qu'on ne peut pas accéder à la page de réservation d'une compétition passée
 def test_book_past_competition(client):
+    # Vérifie qu'on ne peut pas accéder à la page de réservation d'une compétition passée
     response = client.get('/book/Past Competition/Simply Lift')
     assert response.status_code == 400  # 400 = Bad Request, la compétition est passée
 
 
-# Vérifie que la déconnexion redirige bien vers l'accueil
 def test_logout(client):
+    # Vérifie que la déconnexion redirige bien vers l'accueil
     response = client.get('/logout')
     assert response.status_code == 302  # 302 = redirection HTTP
 
 
-# Vérifie que le tableau des points est accessible sans connexion
 def test_points_board(client):
+    # Vérifie que le tableau des points est accessible sans connexion
     response = client.get('/pointsBoard')
     assert response.status_code == 200
 
 
-# Vérifie que le tableau des points affiche bien les noms des clubs
 def test_points_board_shows_clubs(client):
+    # Vérifie que le tableau des points affiche bien les noms des clubs
     response = client.get('/pointsBoard')
     assert b'Simply Lift' in response.data   # Le club doit apparaître dans le HTML retourné
     assert b'Iron Temple' in response.data
 
 
-# Vérifie qu'une réservation valide retourne 200
-# Simply Lift (13 pts) réserve 3 places pour Spring Festival (25 places)
 def test_purchase_valid(client):
+    # Vérifie qu'une réservation valide retourne 200.
+    # Simply Lift (13 pts) réserve 3 places pour Spring Festival (25 places).
     # patch() remplace save_clubs et save_competitions par des faux pour ne pas écrire sur le disque
     with patch('server.save_clubs'), patch('server.save_competitions'):
         response = client.post('/purchasePlaces', data={
@@ -65,8 +65,8 @@ def test_purchase_valid(client):
     assert response.status_code == 200
 
 
-# Vérifie qu'on ne peut pas réserver plus de 12 places (limite par compétition)
 def test_purchase_too_many_places(client):
+    # Vérifie qu'on ne peut pas réserver plus de 12 places (limite par compétition)
     with patch('server.save_clubs'), patch('server.save_competitions'):
         response = client.post('/purchasePlaces', data={
             'club': 'Simply Lift',
@@ -76,9 +76,9 @@ def test_purchase_too_many_places(client):
     assert response.status_code == 400
 
 
-# Vérifie qu'on ne peut pas réserver si le club n'a pas assez de points
-# Iron Temple (4 pts) tente de réserver 5 places → refus
 def test_purchase_not_enough_points(client):
+    # Vérifie qu'on ne peut pas réserver si le club n'a pas assez de points.
+    # Iron Temple (4 pts) tente de réserver 5 places : refus.
     with patch('server.save_clubs'), patch('server.save_competitions'):
         response = client.post('/purchasePlaces', data={
             'club': 'Iron Temple',   # 4 points disponibles
@@ -88,9 +88,9 @@ def test_purchase_not_enough_points(client):
     assert response.status_code == 400
 
 
-# Vérifie qu'on ne peut pas réserver plus de places qu'il n'en reste disponibles
-# Fall Classic a 13 places, Simply Lift tente d'en réserver 14 → refus
 def test_purchase_more_than_available(client):
+    # Vérifie qu'on ne peut pas réserver plus de places qu'il n'en reste disponibles.
+    # Fall Classic a 13 places, Simply Lift tente d'en réserver 14 : refus.
     with patch('server.save_clubs'), patch('server.save_competitions'):
         response = client.post('/purchasePlaces', data={
             'club': 'Simply Lift',
